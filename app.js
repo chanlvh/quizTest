@@ -41,7 +41,21 @@ app.get('/new', function (req, res) {
 });
 app.get('/quiz', function (req, res) {
     let id = req.query.id;
-    res.send(id);
+    let prev_ques = parseInt(req.query.prev_ques);
+    if (!prev_ques) prev_ques=0;
+    let ques = prev_ques += 1;
+    const coll=db.collection('ques');
+    coll.findOne({pos: ques}, function(err, result) {
+        if (err) {
+            res.send('Error: ' + err);
+            return;
+        };
+        let form = '<form method="get" action="/quiz">';
+        form += '<input type="hidden" name="ques" value=' + ques + ' />';
+        form += '<input type="text" name="answer" />';
+        form += '<input type="submit" value="Next"/>';
+        res.send(result.text + form);
+    });
 });
 app.listen(3000, () => console.log('App listening on port 3000!'));
 
