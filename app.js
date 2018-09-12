@@ -24,9 +24,9 @@ MongoClient.connect('mongodb://localhost:27017/main', function (err, client) {
   });
 });
 
-let saveAnswer = (res, answer, prevQues, userId) => {
+let saveAnswer = (res, answer, prevQues, userId, timeLeft) => {
     const coll = db.collection('answers');
-    coll.insertOne({user: ObjectID(userId), ques: prevQues, answer: answer}, function(err, result) {
+    coll.insertOne({user: ObjectID(userId), ques: prevQues, answer: answer, timeLeft: timeLeft}, function(err, result) {
         if (err) throw err;
         console.log("Saved answer for " + prevQues + " from " + userId);
     });
@@ -53,13 +53,14 @@ app.get('/new', function (req, res) {
 app.get('/quiz', function (req, res) {
     let userId = req.query.id;
     let prevQues = parseInt(req.query.prev_ques);
+    let timeLeft = parseInt(req.query.time);
 
     if (!userId) return res.redirect('/');
 
     // save previous answer
     let answer = req.query.answer;
     if (answer && prevQues) {
-        saveAnswer(res, answer, prevQues, userId);
+        saveAnswer(res, answer, prevQues, userId, timeLeft);
     }
 
     //calculate next question
@@ -73,12 +74,16 @@ app.get('/quiz', function (req, res) {
     coll.findOne({pos: ques}, function(err, result) {
         if (err) throw err;
         let ques_text = 'Question ' + ques + '/' + countQues + '<br />' + result.text;
-        let form = '<form method="get" action="/quiz">';
+        let form = '<form method="get" action="/quiz" id="form">';
         form += '<input type="hidden" name="prev_ques" value=' + ques + ' />';
         form += '<input type="hidden" name="id" value=' + userId + ' />';
         form += '<input type="text" name="answer" />';
-        form += '<input type="submit" value="Next"/>';
-        return res.send(ques_text + form);
+        form += '<input type="submit" value="Next"/><br/>';
+        form += 'Time left: <input type="text" name="time" disable=true id="time"/>';
+        form += '</form>';
+        let intervalFunc = 'function(){if(--count < 0) document.querySelector("#form").submit(); else document.querySelector("#time").value = count;}';
+        let js = '<script>count = '+result.time+'; window.onload = function() { setInterval('+intervalFunc+', 1000)}</script>'
+        return res.send(ques_text + form + js);
     });
 });
 app.listen(3000, () => console.log('App listening on port 3000!'));
