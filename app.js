@@ -15,7 +15,17 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.listen(3000, () => console.log('Example app listening on port 3000!'));
+app.get('/new', function (req, res) {
+    let fname = req.query.first_name;
+    let lname = req.query.last_name;
+    let email = req.query.email;
+    
+    res.send(email);
+});
+app.get('/quiz', function (req, res) {
+    let email = req.query.email;
+    res.send(email);
+});
+app.listen(3000, () => console.log('App listening on port 3000!'));
 
 module.exports = app;
